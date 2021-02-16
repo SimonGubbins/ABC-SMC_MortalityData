@@ -1,0 +1,9 @@
+1
+[relevant value from InitialHerdSizes_Russia.txt]
+[no. rows in MortalityData.txt]
+[relevant value from DayOfASFVConfirmation_Russia.txt]
+1
+1
+10000
+20
+50.0
