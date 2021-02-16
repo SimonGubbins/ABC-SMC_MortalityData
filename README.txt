@@ -7,3 +7,5 @@ Emerging Diseases 65(2), e264-e271 (doi: 10.1111/tbed.12748).
 
 The individual files and how to run the compiled code is described in
 "ABC-SMC Code Description.pdf"
+
+The data for African swine fever are in "ASFData".
