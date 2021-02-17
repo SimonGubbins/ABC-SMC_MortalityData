@@ -245,35 +245,35 @@ C Mean latent period
                   IF (priorFlag(1).EQ.0) THEN
                       thetaD(1)=DBLE(5.0)*RAN3(IDUM)
                   ELSE IF (priorFlag(1).EQ.1) THEN
-                      thetaD(1)=GAMDEV(DBLE(2.0),DBLE(2.0))
+                      thetaD(1)=GAMDEV(DBLE(2.0),DBLE(1.0))
                   END IF
 C
 C Latent period shape
                   IF (priorFlag(2).EQ.0) THEN
                       thetaD(2)=DBLE(5.0)*RAN3(IDUM)
                   ELSE IF (priorFlag(2).EQ.1) THEN
-                      thetaD(2)=-DBLE(1.0)*DLOG(RAN3(IDUM))
+                      thetaD(2)=DBLE(5.0)*RAN3(IDUM)
                   END IF
 C
 C Mean infectious period
                   IF (priorFlag(3).EQ.0) THEN
                       thetaD(3)=DBLE(10.0)*RAN3(IDUM)
                   ELSE IF (priorFlag(3).EQ.1) THEN
-                      thetaD(3)=GAMDEV(DBLE(20.0),DBLE(4.0))
+                      thetaD(3)=GAMDEV(DBLE(10.0),DBLE(5.0))
                   END IF
 C
 C Infectious period shape parameter
                   IF (priorFlag(4).EQ.0) THEN
-                      thetaD(4)=DBLE(10.0)*RAN3(IDUM)
+                      thetaD(4)=DBLE(20.0)*RAN3(IDUM)
                   ELSE IF (priorFlag(4).EQ.1) THEN
-                      thetaD(4)=GAMDEV(DBLE(20.0),DBLE(4.0))
+                      thetaD(4)=DBLE(20.0)*RAN3(IDUM)
                   END IF
 C
 C Transmission parameter
 	            IF (priorFlag(5).EQ.0) THEN
                       thetaD(5)=DBLE(10.0)*RAN3(IDUM)
 	            ELSE IF (priorFlag(5).EQ.1) THEN
-                      thetaD(5)=GAMDEV(DBLE(2.0),DBLE(2.0))
+                      thetaD(5)=GAMDEV(DBLE(1.5),DBLE(1.5))
 	            END IF
 C
 C Mortality rate

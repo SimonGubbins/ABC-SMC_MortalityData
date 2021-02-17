@@ -1,22 +1,27 @@
-      FUNCTION GAMDEV(G,H)
+      FUNCTION GAMDEV(shape,mean)
 
 C     Returns a random number with a gamma distribution with mean
 C     G/H and variance G/(H^2). (ie. shape parameter G & scale
 C     parameter H)
 
 C	Modified from routine ZBQLGAM taken from http://www.homepages.ucl.ac.uk/~ucakarc/work/software/randgen.f
-
-C	Tom Sumner 02/11/10
-
+C
+      IMPLICIT NONE
+C
+      REAL*8 shape,mean
       REAL*8 C,D,R,G,H,A,z1,z2,B1,B2,M
       REAL*8 U1,U2,U,V,TEST,X
       REAL*8 c1,c2,c3,c4,c5,w
-
+C
 	REAL*8 RAN3,GAMDEV
 	INTEGER*4 IDUM
 C
       COMMON IDUM
-
+C
+C Transform the shape and mean to the parameters used in the routine
+      G=shape
+      H=shape/mean
+      
       GAMDEV = 0.0
 
       IF ( (G.LE.0.0).OR.(H.LT.0.0) ) THEN

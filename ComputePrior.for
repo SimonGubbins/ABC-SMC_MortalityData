@@ -22,35 +22,35 @@ C Prior for mean latent period
       IF (priorFlag(1).EQ.0) THEN
           prior=UNIFPDF(theta(1),DBLE(0.0),DBLE(5.0))
       ELSE IF (priorFlag(1).EQ.1) THEN
-          prior=GAMPDF(theta(1),DBLE(2.0),DBLE(0.5))
+          prior=GAMPDF(theta(1),DBLE(2.0),DBLE(1.0))
       END IF
 C
 C Prior for latent period shape
       IF (priorFlag(2).EQ.0) THEN
           prior=prior*UNIFPDF(theta(2),DBLE(0.0),DBLE(5.0))
       ELSE IF (priorFlag(2).EQ.1) THEN
-          prior=prior*EXPPDF(theta(2),DBLE(1.0))
+          prior=prior*UNIFPDF(theta(2),DBLE(0.0),DBLE(5.0))
       END IF
 C
 C Prior for mean infectious period parameter
       IF (priorFlag(3).EQ.0) THEN
           prior=prior*UNIFPDF(theta(3),DBLE(0.0),DBLE(10.0))
       ELSE IF (priorFlag(3).EQ.1) THEN
-          prior=prior*GAMPDF(theta(3),DBLE(20.0),DBLE(0.25))
+          prior=prior*GAMPDF(theta(3),DBLE(10.0),DBLE(5.0))
       END IF
 C
 C Prior for infectious period shape parameter
       IF (priorFlag(4).EQ.0) THEN
-          prior=prior*UNIFPDF(theta(4),DBLE(0.0),DBLE(10.0))
+          prior=prior*UNIFPDF(theta(4),DBLE(0.0),DBLE(20.0))
       ELSE IF (priorFlag(4).EQ.1) THEN
-          prior=prior*GAMPDF(theta(4),DBLE(20.0),DBLE(0.25))
+          prior=prior*UNIFPDF(theta(4),DBLE(0.0),DBLE(20.0))
       END IF
 C
 C Prior for transmission parameter
       IF (priorFlag(5).EQ.0) THEN
           prior=prior*UNIFPDF(theta(5),DBLE(0.0),DBLE(10.0))
       ELSE IF (priorFlag(5).EQ.1) THEN
-          prior=prior*GAMPDF(theta(5),DBLE(2.0),DBLE(0.5))
+          prior=prior*GAMPDF(theta(5),DBLE(1.5),DBLE(1.5))
       END IF
 C
 C Prior for mortality rate
@@ -99,10 +99,12 @@ C Exponential
 C
 C Gamma
 C note: shape=a, mean=a*b
-      FUNCTION GAMPDF(X,a,b)
+      FUNCTION GAMPDF(X,shape,mean)
       IMPLICIT NONE
-      REAL*8 GAMPDF,X,a,b
+      REAL*8 GAMPDF,X,a,b,shape,mean
       REAL*8 G,gammln
+      a=shape
+      b=mean/shape
       IF (X.LT.0.0) THEN
           GAMPDF=0.0
       ELSE
