@@ -35,7 +35,7 @@ C data when infection confirmed, T1 <= TConf <= T2)
 C
 C ABC STUFF----------------------------------------------------------
 C Number of parameters
-      INTEGER*4, PARAMETER :: nPar = 7
+      INTEGER*4, PARAMETER :: nPar = 8
 C Number of particles and rounds
 	INTEGER*4 nP,nT
       INTEGER*4 T,P,PSel
@@ -68,6 +68,9 @@ C beta - transmission rate
 	REAL*8 muE,muI
       REAL*8 beta
 C
+C Case fatality
+      REAL*8 caseF
+C
 C Baseline mortality rate
 	REAL*8 rM
 C
@@ -77,7 +80,7 @@ C
 C MISCELLANY---------------------------------------------------------
 	INTEGER*4 I,J
 	INTEGER*4 IDUM
-	REAL*8 RAN3,PROB,GAMDEV
+	REAL*8 RAN3,PROB,GAMDEV,BETA_RAND
 C
       COMMON IDUM
 C
@@ -127,51 +130,38 @@ C Informative all
           priorFlag(4)=1
           priorFlag(5)=1
           priorFlag(6)=1
+          priorFlag(7)=1
 C
-C Informative all, except transmission
+C Non-informative all
       ELSE IF (priorID.EQ.2) THEN
-          priorFlag(1)=1
-          priorFlag(2)=1
-          priorFlag(3)=1
-          priorFlag(4)=1
-          priorFlag(5)=0
-          priorFlag(6)=1
-C
-C Informative all, except transmission and mortality
-      ELSE IF (priorID.EQ.3) THEN
-          priorFlag(1)=1
-          priorFlag(2)=1
-          priorFlag(3)=1
-          priorFlag(4)=1
+          priorFlag(1)=0
+          priorFlag(2)=0
+          priorFlag(3)=0
+          priorFlag(4)=0
           priorFlag(5)=0
           priorFlag(6)=0
+          priorFlag(7)=0
 C
-C Informative transmission, otherwise non-informative
+C Non-informative all, except case fatality
+      ELSE IF (priorID.EQ.2) THEN
+          priorFlag(1)=0
+          priorFlag(2)=0
+          priorFlag(3)=0
+          priorFlag(4)=0
+          priorFlag(5)=0
+          priorFlag(6)=1
+          priorFlag(7)=0
+C
+C Non-informative all, except baseline mortality
       ELSE IF (priorID.EQ.4) THEN
           priorFlag(1)=0
           priorFlag(2)=0
           priorFlag(3)=0
           priorFlag(4)=0
-          priorFlag(5)=1
-          priorFlag(6)=0
-C
-C Informative mortality, otherwise non-informative
-      ELSE IF (priorID.EQ.5) THEN
-          priorFlag(1)=0
-          priorFlag(2)=0
-          priorFlag(3)=0
-          priorFlag(4)=0
-          priorFlag(5)=0
-          priorFlag(6)=1
-C
-C Non-informative all
-      ELSE IF (priorID.EQ.6) THEN
-          priorFlag(1)=0
-          priorFlag(2)=0
-          priorFlag(3)=0
-          priorFlag(4)=0
           priorFlag(5)=0
           priorFlag(6)=0
+          priorFlag(7)=1
+C
       END IF
 C
 C--------------------------------------------------------------------
@@ -274,17 +264,24 @@ C Transmission parameter
                       thetaD(5)=DBLE(10.0)*RAN3(IDUM)
 	            ELSE IF (priorFlag(5).EQ.1) THEN
                       thetaD(5)=GAMDEV(DBLE(1.5),DBLE(1.5))
-	            END IF
+                  END IF
 C
-C Mortality rate
+C Case fatality
                   IF (priorFlag(6).EQ.0) THEN
-                      thetaD(6)=DBLE(0.005)*RAN3(IDUM)
+                      thetaD(6)=RAN3(IDUM)
                   ELSE IF (priorFlag(6).EQ.1) THEN
-                      thetaD(6)=-DBLE(0.0002)*DLOG(RAN3(IDUM))
+                      thetaD(6)=BETA_RAND(DBLE(40.0),DBLE(18.0))
+                  END IF
+C
+C Baseline mortality rate
+                  IF (priorFlag(7).EQ.0) THEN
+                      thetaD(7)=DBLE(0.005)*RAN3(IDUM)
+                  ELSE IF (priorFlag(7).EQ.1) THEN
+                      thetaD(7)=-DBLE(0.0002)*DLOG(RAN3(IDUM))
                   END IF
 C
 C Time of introduction (always non-informative)
-                  thetaD(7)=DFLOAT(T1-30)+
+                  thetaD(8)=DFLOAT(T1-30)+
      +                      (DFLOAT(TConf)-
      +                       DFLOAT(T1-30))*RAN3(IDUM)
 C
@@ -315,13 +312,14 @@ C Extract the parameters
               muI=thetaD(3)
               kI=CEILING(thetaD(4))
               beta=thetaD(5)
-              rM=thetaD(6)
-              T0=CEILING(thetaD(7))
+              caseF=thetaD(6)
+              rM=thetaD(7)
+              T0=CEILING(thetaD(8))
 C
 C Simulate the outbreak, computing the simulated mortality data for the herd
               CALL SimulateOutbreak(SimDeadAnim,NAnim,
      +                              I0,T0,T1,T2,
-     +                              beta,muE,muI,kE,kI,rM)
+     +                              beta,muE,muI,kE,kI,caseF,rM)
 C
 C Check that mortality doesn't exceed the number of animals and, if it does,
 C reject the simulation
@@ -387,8 +385,8 @@ C SAVE THE RESULTS
 C--------------------------------------------------------------------
 C Output the sampled parameters
 		    OPEN(99,FILE='.\Outputs\parsamp.txt',ACCESS='APPEND')
-		    WRITE(99,'(2(2X,I8),2(2X,F20.7,2X,I8),2(2X,F20.7),2X,I8)')
-     +        T,P,muE,kE,muI,kI,beta,rM,T0
+		    WRITE(99,'(2(2X,I8),2(2X,F20.7,2X,I8),3(2X,F20.7),2X,I8)')
+     +        T,P,muE,kE,muI,kI,beta,caseF,rM,T0
 		    CLOSE(99)
 C
 C Output the simulated mortalities
@@ -432,7 +430,7 @@ C
 C Output theta
           OPEN(99,FILE='.\Outputs\theta.txt',ACCESS='APPEND')
           DO P=1,nP
-              WRITE(99,'(I6,2X,I6,31(2X,F20.7))') T,P,
+              WRITE(99,'(I6,2X,I6,10(2X,F20.7))') T,P,
      +        (theta(J,P,T),J=1,nPar)
           END DO
       	CLOSE(99)

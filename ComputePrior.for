@@ -15,7 +15,7 @@ C Flag indicating prior to use for each parameter (0: non-informative, 1: inform
       INTEGER*4 priorFlag(nPar-1)
 C
 C Some functions for the PDFs
-      REAL*8 UNIFPDF,EXPPDF,GAMPDF
+      REAL*8 UNIFPDF,EXPPDF,GAMPDF,BETAPDF
 C
 C
 C Prior for mean latent period
@@ -53,15 +53,22 @@ C Prior for transmission parameter
           prior=prior*GAMPDF(theta(5),DBLE(1.5),DBLE(1.5))
       END IF
 C
-C Prior for mortality rate
+C Prior for case fatality
       IF (priorFlag(6).EQ.0) THEN
-          prior=prior*UNIFPDF(theta(6),DBLE(0.0),DBLE(0.005))
+          prior=prior*UNIFPDF(theta(6),DBLE(0.0),DBLE(1.0))
       ELSE IF (priorFlag(6).EQ.1) THEN
-          prior=prior*EXPPDF(theta(6),DBLE(0.0002))
+          prior=prior*BETAPDF(theta(6),DBLE(40.0),DBLE(18.0))
+      END IF
+C
+C Prior for baseline mortality rate
+      IF (priorFlag(7).EQ.0) THEN
+          prior=prior*UNIFPDF(theta(7),DBLE(0.0),DBLE(0.005))
+      ELSE IF (priorFlag(7).EQ.1) THEN
+          prior=prior*EXPPDF(theta(7),DBLE(0.0002))
       END IF
 C
 C Prior for time of introduction
-      prior=prior*UNIFPDF(theta(7),DFLOAT(T1-30),DFLOAT(TConf))
+      prior=prior*UNIFPDF(theta(8),DFLOAT(T1-30),DFLOAT(TConf))
 C
 C      
       RETURN
@@ -113,3 +120,18 @@ C note: shape=a, mean=a*b
       END IF
       RETURN
       END
+C
+C Beta
+      FUNCTION BETAPDF(X,a,b)
+      IMPLICIT NONE
+      REAL*8 BETAPDF,X,a,b
+      REAL*8 beta,gammln
+      IF ((X.LT.0.0).OR.(X.GT.1.0)) THEN
+          BETAPDF=0.0
+      ELSE
+          beta=DEXP(gammln(a)+gammln(b)-gammln(a+b))
+          BETAPDF=(X**(a-1.0))*((1.0-X)**(b-1.0))/beta
+      END IF
+      RETURN
+      END
+      

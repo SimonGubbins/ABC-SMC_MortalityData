@@ -1,5 +1,5 @@
-	SUBROUTINE UpdatePopulations(DT,S,E,I,kE,kI,
-     +						     beta,muE,muI,rM,NewDeadAnim)
+	SUBROUTINE UpdatePopulations(DT,S,E,I,R,kE,kI,
+     +						     beta,muE,muI,caseF,rM,NewDeadAnim)
 C--------------------------------------------------------------------
 C Subroutine to update the populations from one time step to the next
 C for the stochastic epidemic model for a directly transmitted high-
@@ -14,15 +14,15 @@ C Time step
 	REAL*8 DT
 C
 C Susceptible (S), latent (E) (in each kE stage), infectious (I) (in each kI stage)
-C animals
+C and recovered (R) animals
 	INTEGER*4 kE,kI
-	INTEGER*4 S,E(kE),I(kI)
+	INTEGER*4 S,E(kE),I(kI),R
       INTEGER*4 NAnim
 C
 C Number of transitions (infection, death, advance through infection
-C stages and recruitment)
+C stages)
 	INTEGER*4 NInf,NAdvE(kE),NAdvI(kI)
-	INTEGER*4 NDeadS,NDeadE(kE),NDeadI(kI)
+	INTEGER*4 NDeadS,NDeadE(kE),NDeadI(kI),NDisMort(kI),NDeadR
       INTEGER*4 NewDeadAnim
 C
 C Force of infection
@@ -30,7 +30,7 @@ C Force of infection
 C
 C Parameters
 	REAL*8 muE,muI
-      REAL*8 rE,rI,rM
+      REAL*8 rE,rI,caseF,rM
 	REAL*8 beta
 C
 C Miscellany
@@ -43,7 +43,7 @@ C
 C--------------------------------------------------------------------
 C COMPUTE FORCE OF INFECTION
 C--------------------------------------------------------------------
-	NAnim=S+SUM(E)+SUM(I)
+	NAnim=S+SUM(E)+SUM(I)+R
 	Lambda=beta*(DFLOAT(SUM(I))/DFLOAT(NAnim))
 C
 C--------------------------------------------------------------------
@@ -93,10 +93,29 @@ C
 C Natural mortality
           NDeadI(J)=0
 	    IF ((I(J).GT.0).AND.(rM.GT.0.0)) THEN
-	        NDeadI(J)=HOWMANY(I(J),rM*DT)
+	        NDeadI(J)=NDeadI(J)+HOWMANY(I(J),rM*DT)
+          END IF
+C
+C Disease-associated mortality
+          NDisMort(J)=0
+          IF (J.LT.kI) THEN
+              NDisMort(J)=0
+          ELSE IF (J.EQ.kI) THEN
+              IF ((NAdvI(kI).GT.0).AND.(caseF.GT.0.0)) THEN
+	            NDisMort(kI)=HOWMANY(NAdvI(kI),caseF)
+                  NAdvI(kI)=NAdvI(kI)-NDisMort(kI)
+              END IF
           END IF
 C
       END DO
+C
+C Recovered animals
+C
+C Natural mortality
+      NDeadR=0
+	IF ((R.GT.0).AND.(rM.GT.0.0)) THEN
+	    NDeadR=HOWMANY(R,rM*DT)
+      END IF
 C
 C--------------------------------------------------------------------
 C UPDATE POPULATIONS (ensuring they are always non-negative)
@@ -113,16 +132,18 @@ C Latent animals (stages 2 to kE)
       END DO
 C
 C Infectious animals (stage 1)
-	I(1)=MAX(0,I(1)+NAdvE(kE)-NAdvI(1)-NDeadI(1))
+	I(1)=MAX(0,I(1)+NAdvE(kE)-NAdvI(1)-NDisMort(1)-NDeadI(1))
 C
 C Infectious animals (stages 2 to kI)
 	DO J=2,kI
-	    I(J)=MAX(0,I(J)+NAdvI(J-1)-NAdvI(J)-NDeadI(J))
+	    I(J)=MAX(0,I(J)+NAdvI(J-1)-NAdvI(J)-NDisMort(J)-NDeadI(J))
       END DO
 C
-C Compute the number of newly dead animals (infected animals are
-C assumed to die at the end of the infectious period)
-      NewDeadAnim=NDeadS+SUM(NDeadE)+SUM(NDeadI)+NAdvI(kI)
+C Recpvered animals
+      R=MAX(0,R+NAdvI(kI)-NDeadR)
+C
+C Compute the number of newly dead animals
+      NewDeadAnim=NDeadS+SUM(NDeadE)+SUM(NDeadI)+SUM(NDisMort)+NDeadR
 C
 C
 	RETURN
